@@ -37,19 +37,20 @@ $requests = $stmt->fetchAll();
 
     <div class="main-content">
         <div class="top-nav">
-            <span>Welcome, <strong><?php echo $_SESSION['name']; ?></strong></span>
+            <h2><i class="fas fa-home"></i> My Dashboard</h2>
+            <div class="user-info">
+                <span>Welcome back, <strong><?php echo $_SESSION['name']; ?></strong></span>
+            </div>
         </div>
 
         <div class="content-wrapper">
-            <h3 style="margin-bottom: 20px; color: var(--gray-800);">Leave Overview</h3>
             <div class="stats-container">
                 <?php 
                 $icons = ['Vacation' => 'fa-plane', 'Sick Leave' => 'fa-briefcase-medical', 'Unpaid' => 'fa-user-clock'];
                 foreach ($balances as $b): 
-                    $type_class = strtolower(str_replace(' ', '-', $b['leave_type']));
                     $icon = $icons[$b['leave_type']] ?? 'fa-calendar';
                 ?>
-                    <div class="stat-card <?php echo $type_class; ?>">
+                    <div class="stat-card">
                         <div class="stat-info">
                             <strong><?php echo $b['leave_type']; ?></strong>
                             <div class="value">
@@ -67,13 +68,14 @@ $requests = $stmt->fetchAll();
                 <div class="card-header">
                     <h3><i class="fas fa-list"></i> My Leave Requests</h3>
                     <a href="request_leave.php" style="text-decoration: none;">
-                        <button style="width: auto; padding: 5px 15px; background: var(--primary); font-size: 0.8rem;">
+                        <button style="width: auto; padding: 10px 20px; background: #5cb85c; font-size: 0.9rem;">
                             <i class="fas fa-plus"></i> Request Leave
                         </button>
                     </a>
                 </div>
                 <div class="card-body">
-                    <table>
+                    <div class="table-responsive">
+                        <table>
                         <thead>
                             <tr>
                                 <th>Type</th>

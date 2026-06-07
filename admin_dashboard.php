@@ -40,7 +40,10 @@ $all_requests = $stmt->fetchAll();
 
     <div class="main-content">
         <div class="top-nav">
-            <span>Welcome, <strong><?php echo $_SESSION['name']; ?></strong> (Admin)</span>
+            <h2><i class="fas fa-tachometer-alt"></i> Admin Control Panel</h2>
+            <div class="user-info">
+                <span>Logged in as: <strong><?php echo $_SESSION['name']; ?></strong></span>
+            </div>
         </div>
 
         <div class="content-wrapper">
@@ -49,7 +52,8 @@ $all_requests = $stmt->fetchAll();
                     <h3><i class="fas fa-clock"></i> Pending Leave Requests</h3>
                 </div>
                 <div class="card-body">
-                    <table>
+                    <div class="table-responsive">
+                        <table>
                         <thead>
                             <tr>
                                 <th>Employee</th>
