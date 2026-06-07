@@ -10,22 +10,22 @@ $role = $_SESSION['role'] ?? '';
     <ul class="sidebar-menu">
         <?php if ($role === 'Admin'): ?>
             <li class="<?php echo $current_page == 'admin_dashboard.php' ? 'active' : ''; ?>">
-                <a href="admin_dashboard.php">Dashboard</a>
+                <a href="admin_dashboard.php"><i class="fas fa-fw fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li class="<?php echo $current_page == 'manage_users.php' ? 'active' : ''; ?>">
-                <a href="#">Manage Users</a> <!-- Placeholder for now -->
+                <a href="#"><i class="fas fa-fw fa-users"></i> Manage Users</a>
             </li>
         <?php else: ?>
             <li class="<?php echo $current_page == 'employee_dashboard.php' ? 'active' : ''; ?>">
-                <a href="employee_dashboard.php">My Dashboard</a>
+                <a href="employee_dashboard.php"><i class="fas fa-fw fa-home"></i> My Dashboard</a>
             </li>
             <li class="<?php echo $current_page == 'request_leave.php' ? 'active' : ''; ?>">
-                <a href="request_leave.php">Request Leave</a>
+                <a href="request_leave.php"><i class="fas fa-fw fa-paper-plane"></i> Request Leave</a>
             </li>
         <?php endif; ?>
         
         <li class="logout-link">
-            <a href="logout.php">Logout</a>
+            <a href="logout.php"><i class="fas fa-fw fa-sign-out-alt"></i> Logout</a>
         </li>
     </ul>
 </div>
