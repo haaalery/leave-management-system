@@ -48,7 +48,7 @@ body {
     background: white; border-radius: var(--radius); border: none;
     box-shadow: var(--shadow); margin-bottom: 40px; transition: 0.3s;
 }
-.stat-card { padding: 30px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--green); }
+.stat-card { padding: 30px; display: flex; justify-content: space-between; align-items: center; }
 .stat-card:hover { transform: translateY(-5px); }
 .stat-info strong { text-transform: uppercase; font-size: 0.85rem; color: var(--text-muted); }
 .stat-info .value { font-size: 2rem; font-weight: 800; color: #333; margin-top: 5px; }
