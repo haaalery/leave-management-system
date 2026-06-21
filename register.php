@@ -12,6 +12,9 @@ if (isset($_SESSION['user_id'])) {
 $error = "";
 $success = "";
 
+// Load departments for dropdown
+$departments_list = $pdo->query("SELECT id, name FROM departments ORDER BY name ASC")->fetchAll();
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // CSRF
     $token = $_POST['csrf_token'] ?? '';
@@ -19,17 +22,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         die("CSRF token validation failed.");
     }
 
-    $first_name  = trim($_POST['first_name'] ?? '');
-    $middle_name = trim($_POST['middle_name'] ?? '');
-    $last_name   = trim($_POST['last_name'] ?? '');
-    $email       = trim($_POST['email'] ?? '');
-    $password    = $_POST['password'] ?? '';
-    $confirm     = $_POST['confirm_password'] ?? '';
-    $department  = trim($_POST['department'] ?? '');
-    $position    = trim($_POST['position'] ?? '');
+    $first_name   = trim($_POST['first_name'] ?? '');
+    $middle_name  = trim($_POST['middle_name'] ?? '');
+    $last_name    = trim($_POST['last_name'] ?? '');
+    $email        = trim($_POST['email'] ?? '');
+    $gender       = trim($_POST['gender'] ?? '');
+    $password     = $_POST['password'] ?? '';
+    $confirm      = $_POST['confirm_password'] ?? '';
+    $dept_id      = (int)($_POST['department_id'] ?? 0);
+    $pos_id       = (int)($_POST['position_id'] ?? 0);
 
-    if (empty($first_name) || empty($last_name) || empty($email) || empty($password) || empty($confirm)) {
+    // Resolve text names from IDs for the legacy columns
+    $dept_name = '';
+    $pos_name  = '';
+    if ($dept_id) {
+        $d = $pdo->prepare("SELECT name FROM departments WHERE id=?");
+        $d->execute([$dept_id]); $dept_name = $d->fetchColumn() ?: '';
+    }
+    if ($pos_id) {
+        $p = $pdo->prepare("SELECT title FROM positions WHERE id=?");
+        $p->execute([$pos_id]); $pos_name = $p->fetchColumn() ?: '';
+    }
+
+    if (empty($first_name) || empty($last_name) || empty($email) || empty($gender) || empty($password) || empty($confirm)) {
         $error = "All required fields must be filled.";
+    } elseif (!in_array($gender, ['Male', 'Female'])) {
+        $error = "Invalid gender selected.";
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         $error = "Please enter a valid email address.";
     } elseif ($password !== $confirm) {
@@ -37,17 +55,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } elseif (strlen($password) < 8) {
         $error = "Password must be at least 8 characters long.";
     } else {
-        // Check email uniqueness
         $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE email = ?");
         $stmt->execute([$email]);
         if ($stmt->fetchColumn() > 0) {
             $error = "This email address is already registered.";
         } else {
-            // Concatenate name
             $fullname = $first_name . ($middle_name ? ' ' . $middle_name : '') . ' ' . $last_name;
-            $hashed = password_hash($password, PASSWORD_DEFAULT);
-            $stmt = $pdo->prepare("INSERT INTO users (name, first_name, middle_name, last_name, email, password, role, status, department, position) VALUES (?, ?, ?, ?, ?, ?, 'Employee', 'Pending', ?, ?)");
-            $stmt->execute([$fullname, $first_name, $middle_name, $last_name, $email, $hashed, $department, $position]);
+            $hashed   = password_hash($password, PASSWORD_DEFAULT);
+            $stmt = $pdo->prepare("INSERT INTO users
+                (name, first_name, middle_name, last_name, email, password, role, status, gender,
+                 department, position, department_id, position_id)
+                VALUES (?, ?, ?, ?, ?, ?, 'Employee', 'Pending', ?, ?, ?, ?, ?)");
+            $stmt->execute([$fullname, $first_name, $middle_name, $last_name, $email, $hashed,
+                            $gender, $dept_name, $pos_name, $dept_id ?: null, $pos_id ?: null]);
             $success = true;
         }
     }
@@ -170,14 +190,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="email" name="email" required placeholder="john@example.com" value="<?php echo e($_POST['email'] ?? ''); ?>">
                     </div>
 
+                    <div class="form-group">
+                        <label>Gender <span style="color:var(--danger)">*</span></label>
+                        <select name="gender" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 0.95rem;">
+                            <option value="">Select Gender</option>
+                            <option value="Male" <?php echo (($_POST['gender'] ?? '') === 'Male') ? 'selected' : ''; ?>>Male</option>
+                            <option value="Female" <?php echo (($_POST['gender'] ?? '') === 'Female') ? 'selected' : ''; ?>>Female</option>
+                        </select>
+                    </div>
+
                     <div class="form-row">
                         <div class="form-group">
-                            <label>Department</label>
-                            <input type="text" name="department" placeholder="e.g. Engineering" value="<?php echo e($_POST['department'] ?? ''); ?>">
+                            <label>Department <span style="font-size:0.8rem; color:var(--text-muted)">(Optional)</span></label>
+                            <select name="department_id" id="reg-dept" onchange="loadPositions(this.value,'reg-pos')" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:0.95rem;">
+                                <option value="">Select Department</option>
+                                <?php foreach ($departments_list as $d): ?>
+                                <option value="<?php echo $d['id']; ?>"><?php echo e($d['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>Position / Job Title</label>
-                            <input type="text" name="position" placeholder="e.g. Developer" value="<?php echo e($_POST['position'] ?? ''); ?>">
+                            <label>Position / Job Title <span style="font-size:0.8rem; color:var(--text-muted)">(Optional)</span></label>
+                            <select name="position_id" id="reg-pos" style="width:100%;padding:12px;border:1px solid var(--border);border-radius:8px;background:#fff;font-size:0.95rem;">
+                                <option value="">Select Department first</option>
+                            </select>
                         </div>
                     </div>
 
@@ -205,3 +241,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 </body>
 </html>
+<script>
+async function loadPositions(deptId, targetId) {
+    const sel = document.getElementById(targetId);
+    sel.innerHTML = '<option value="">Loading...</option>';
+    if (!deptId) { sel.innerHTML = '<option value="">Select Department first</option>'; return; }
+    const res  = await fetch('get_positions.php?dept_id=' + deptId);
+    const data = await res.json();
+    sel.innerHTML = '<option value="">Select Position</option>';
+    data.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id; opt.textContent = p.title;
+        sel.appendChild(opt);
+    });
+    if (!data.length) sel.innerHTML = '<option value="">No positions in this department</option>';
+}
+</script>

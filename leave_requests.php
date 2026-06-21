@@ -5,6 +5,11 @@ require_once 'includes/auth_check.php';
 checkLogin();
 checkAdmin();
 
+// Read & clear flash session set by approve_deny.php
+$flash_action = $_SESSION['flash_action'] ?? null;
+$flash_type   = $_SESSION['flash_type']   ?? null;
+unset($_SESSION['flash_action'], $_SESSION['flash_type'], $_SESSION['flash_name']);
+
 // Fetch all leave requests
 $stmt = $pdo->query("SELECT lr.*, u.name as employee_name, u.email as employee_email, u.department as employee_dept 
                      FROM leave_requests lr 
@@ -151,6 +156,50 @@ foreach ($requests as $r) {
             justify-content: flex-end;
             gap: 12px;
         }
+
+        /* Confirmation & Result modal (layered on top) */
+        .lms-modal-overlay {
+            display: none; position: fixed; inset: 0;
+            background: rgba(15,23,42,0.6); backdrop-filter: blur(6px);
+            z-index: 2000; align-items: center; justify-content: center;
+        }
+        .lms-modal-overlay.show { display: flex; }
+        .lms-modal {
+            background: #fff; border-radius: 20px; padding: 40px 36px;
+            max-width: 400px; width: 90%; text-align: center;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.2);
+            animation: lmsPop 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes lmsPop {
+            from { transform: scale(0.75); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .lms-modal .m-icon {
+            width: 70px; height: 70px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 18px; font-size: 1.9rem; color: #fff;
+        }
+        .m-icon.approve { background: linear-gradient(135deg,#10b981,#059669); box-shadow: 0 0 0 12px rgba(16,185,129,0.12); }
+        .m-icon.reject  { background: linear-gradient(135deg,#ef4444,#dc2626); box-shadow: 0 0 0 12px rgba(239,68,68,0.12); }
+        .lms-modal h2 { font-size:1.35rem; font-weight:700; margin-bottom:8px; color:var(--text); }
+        .lms-modal p  { color:var(--text-muted); font-size:0.9rem; line-height:1.6; margin-bottom:0; }
+        .lms-modal .m-detail {
+            background:#f8fafc; border:1px solid var(--border); border-radius:10px;
+            padding:12px 16px; margin:16px 0; font-size:0.86rem; text-align:left;
+        }
+        .lms-modal .m-detail div { display:flex; justify-content:space-between; padding:3px 0; }
+        .lms-modal .m-detail div span:first-child { color:var(--text-muted); }
+        .m-btn-row { display:flex; gap:10px; margin-top:20px; }
+        .m-btn-row button {
+            flex:1; padding:11px; border-radius:10px; font-size:0.9rem;
+            font-weight:600; cursor:pointer; border:none; transition:opacity 0.2s;
+            display:inline-flex; align-items:center; justify-content:center; gap:6px;
+        }
+        .m-btn-row button:hover { opacity:0.85; }
+        .m-btn-cancel  { background:#f1f5f9; color:var(--text); border:1px solid var(--border) !important; }
+        .m-btn-approve { background:var(--success); color:#fff; }
+        .m-btn-reject  { background:var(--danger);  color:#fff; }
+        .m-btn-ok      { background:var(--primary);  color:#fff; }
     </style>
 </head>
 <body>
@@ -310,22 +359,62 @@ foreach ($requests as $r) {
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn" style="background: var(--text-muted);" onclick="closeRequestModal()">Close</button>
-                <button type="button" class="btn" id="reject-btn" style="background: var(--danger);" onclick="submitAction('Rejected')">Reject</button>
-                <button type="button" class="btn" id="approve-btn" style="background: var(--success);" onclick="submitAction('Approved')">Approve</button>
+                <button type="button" class="btn" id="reject-btn" style="background: var(--danger);"  onclick="openConfirm('Rejected')">Reject</button>
+                <button type="button" class="btn" id="approve-btn" style="background: var(--success);" onclick="openConfirm('Approved')">Approve</button>
             </div>
         </div>
     </div>
 
+    <!-- ===== CONFIRMATION MODAL ===== -->
+    <div class="lms-modal-overlay" id="confirmOverlay">
+        <div class="lms-modal">
+            <div class="m-icon" id="conf-icon"><i id="conf-icon-i" class="fas fa-question"></i></div>
+            <h2 id="conf-title">Confirm</h2>
+            <p  id="conf-msg">Are you sure?</p>
+            <div class="m-detail">
+                <div><span>Employee</span><span id="conf-emp"></span></div>
+                <div><span>Leave Type</span><span id="conf-type"></span></div>
+                <div><span>Duration</span><span id="conf-dur"></span></div>
+            </div>
+            <div class="m-btn-row">
+                <button class="m-btn-cancel" onclick="closeConfirm()"><i class="fas fa-times"></i> Cancel</button>
+                <button id="conf-do-btn" class="m-btn-approve" onclick="doSubmitAction()"><i class="fas fa-check"></i> Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== RESULT / FLASH MODAL ===== -->
+    <?php if ($flash_action && $flash_type === 'leave'): ?>
+    <div class="lms-modal-overlay show" id="resultOverlay">
+        <div class="lms-modal">
+            <?php if ($flash_action === 'Approved'): ?>
+                <div class="m-icon approve"><i class="fas fa-check"></i></div>
+                <h2>Leave Approved!</h2>
+                <p>The leave request has been <strong>approved</strong> and the employee's balance has been updated.</p>
+            <?php else: ?>
+                <div class="m-icon reject"><i class="fas fa-times"></i></div>
+                <h2>Leave Rejected</h2>
+                <p>The leave request has been <strong>rejected</strong>. The employee will see this decision.</p>
+            <?php endif; ?>
+            <div class="m-btn-row">
+                <button class="m-btn-ok" onclick="document.getElementById('resultOverlay').classList.remove('show')">
+                    <i class="fas fa-check"></i> Got it
+                </button>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+
     <script>
         const modal = document.getElementById('requestModal');
-        
+        let _pendingAction = null;
+        let _currentReq    = null;
+
         function filterByStatus(status, tabElement) {
-            // Update active class on tab buttons
             if (tabElement) {
                 document.querySelectorAll('.filter-tab').forEach(tab => tab.classList.remove('active'));
                 tabElement.classList.add('active');
             } else {
-                // If clicked from summary cards, find matching tab
                 document.querySelectorAll('.filter-tab').forEach(tab => {
                     if (tab.textContent.includes(status)) {
                         tab.classList.add('active');
@@ -337,7 +426,6 @@ foreach ($requests as $r) {
 
             const rows = document.querySelectorAll('.request-row');
             let visibleCount = 0;
-            
             rows.forEach(row => {
                 const rowStatus = row.getAttribute('data-status');
                 if (status === 'All' || rowStatus === status) {
@@ -348,7 +436,6 @@ foreach ($requests as $r) {
                 }
             });
 
-            // Handle no requests scenario
             let noReqRow = document.querySelector('.no-requests-row');
             if (visibleCount === 0) {
                 if (!noReqRow) {
@@ -367,18 +454,18 @@ foreach ($requests as $r) {
         }
 
         function openRequestModal(req) {
+            _currentReq = req;
             document.getElementById('modal-request-id').value = req.id;
-            document.getElementById('modal-emp-name').textContent = req.employee_name || '';
+            document.getElementById('modal-emp-name').textContent  = req.employee_name || '';
             document.getElementById('modal-emp-email').textContent = req.employee_email || '';
-            document.getElementById('modal-emp-dept').textContent = req.employee_dept || '—';
+            document.getElementById('modal-emp-dept').textContent  = req.employee_dept || '—';
             document.getElementById('modal-leave-type').textContent = req.leave_type || '';
-            
+
             const startStr = req.start_date;
-            const endStr = req.end_date;
+            const endStr   = req.end_date;
             document.getElementById('modal-duration').innerHTML = `<strong>${startStr}</strong> to <strong>${endStr}</strong> (${req.duration_days} ${req.duration_days > 1 ? 'days' : 'day'})`;
             document.getElementById('modal-reason').textContent = req.reason || '—';
-            
-            // Attachment
+
             const attachVal = document.getElementById('modal-attachment');
             if (req.attachment) {
                 attachVal.innerHTML = `<a href="${req.attachment}" target="_blank" style="color: var(--primary); text-decoration: none; font-weight: 600;"><i class="fas fa-paperclip"></i> View Attachment</a>`;
@@ -386,31 +473,29 @@ foreach ($requests as $r) {
                 attachVal.textContent = 'None';
             }
 
-            // Status Badge
             const badgeClass = `badge badge-${req.status.toLowerCase()}`;
             document.getElementById('modal-status-badge').innerHTML = `<span class="${badgeClass}">${req.status}</span>`;
 
-            // Admin feedback logic depending on status
-            const commentGroup = document.getElementById('comment-group');
-            const commentDisplay = document.getElementById('modal-admin-comment-display');
+            const commentGroup    = document.getElementById('comment-group');
+            const commentDisplay  = document.getElementById('modal-admin-comment-display');
             const commentSections = document.querySelectorAll('.admin-comment-section');
             const approveBtn = document.getElementById('approve-btn');
-            const rejectBtn = document.getElementById('reject-btn');
+            const rejectBtn  = document.getElementById('reject-btn');
 
             if (req.status === 'Pending') {
                 commentGroup.style.display = 'block';
                 commentSections.forEach(sec => sec.style.display = 'none');
                 approveBtn.style.display = 'inline-flex';
-                rejectBtn.style.display = 'inline-flex';
+                rejectBtn.style.display  = 'inline-flex';
                 document.getElementById('admin_comment').value = '';
             } else {
                 commentGroup.style.display = 'none';
                 commentSections.forEach(sec => sec.style.display = 'block');
                 commentDisplay.textContent = req.admin_comment || 'No feedback provided.';
                 approveBtn.style.display = 'none';
-                rejectBtn.style.display = 'none';
+                rejectBtn.style.display  = 'none';
             }
-            
+
             modal.classList.add('show');
         }
 
@@ -418,23 +503,46 @@ foreach ($requests as $r) {
             modal.classList.remove('show');
         }
 
-        function submitAction(action) {
-            if (action === 'Rejected' && !confirm('Are you sure you want to reject this leave request?')) {
-                return;
-            }
-            if (action === 'Approved' && !confirm('Are you sure you want to approve this leave request?')) {
-                return;
-            }
-            document.getElementById('modal-action-val').value = action;
+        // Opens the styled confirmation modal
+        function openConfirm(action) {
+            _pendingAction = action;
+            const req = _currentReq;
+            const isApprove = action === 'Approved';
+
+            document.getElementById('conf-icon').className   = 'm-icon ' + (isApprove ? 'approve' : 'reject');
+            document.getElementById('conf-icon-i').className = 'fas ' + (isApprove ? 'fa-check' : 'fa-times');
+            document.getElementById('conf-title').textContent = isApprove ? 'Approve Leave Request?' : 'Reject Leave Request?';
+            document.getElementById('conf-msg').textContent   = isApprove
+                ? 'This will approve the request and deduct from the employee\'s leave balance.'
+                : 'This will reject the request. The employee will see this decision.';
+            document.getElementById('conf-emp').textContent  = req.employee_name || '';
+            document.getElementById('conf-type').textContent = req.leave_type || '';
+            document.getElementById('conf-dur').textContent  = req.start_date + ' → ' + req.end_date + ' (' + req.duration_days + ' day' + (req.duration_days > 1 ? 's' : '') + ')';
+
+            const doBtn = document.getElementById('conf-do-btn');
+            doBtn.className = isApprove ? 'm-btn-approve' : 'm-btn-reject';
+            doBtn.innerHTML = '<i class="fas ' + (isApprove ? 'fa-check' : 'fa-times') + '"></i> ' + (isApprove ? 'Yes, Approve' : 'Yes, Reject');
+
+            document.getElementById('confirmOverlay').classList.add('show');
+        }
+
+        function closeConfirm() {
+            document.getElementById('confirmOverlay').classList.remove('show');
+            _pendingAction = null;
+        }
+
+        // Actually submits the form
+        function doSubmitAction() {
+            if (!_pendingAction) return;
+            document.getElementById('modal-action-val').value = _pendingAction;
             document.getElementById('action-form').submit();
         }
 
-        // Close when clicking outside of modal
+        // Close details modal when clicking outside
         window.onclick = function(event) {
-            if (event.target == modal) {
-                closeRequestModal();
-            }
-        }
+            if (event.target == modal) closeRequestModal();
+            if (event.target == document.getElementById('confirmOverlay')) closeConfirm();
+        };
     </script>
 </body>
 </html>

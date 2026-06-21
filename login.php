@@ -5,6 +5,8 @@ require_once 'includes/config.php';
 if (isset($_SESSION['user_id'])) {
     if ($_SESSION['role'] == 'Admin') {
         header("Location: admin_dashboard.php");
+    } elseif ($_SESSION['role'] == 'Manager') {
+        header("Location: manager_dashboard.php");
     } else {
         header("Location: employee_dashboard.php");
     }
@@ -32,6 +34,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             if ($user['role'] == 'Admin') {
                 header("Location: admin_dashboard.php");
+            } elseif ($user['role'] == 'Manager') {
+                header("Location: manager_dashboard.php");
             } else {
                 header("Location: employee_dashboard.php");
             }

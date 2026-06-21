@@ -16,6 +16,23 @@ $balances = $stmt->fetchAll();
 $stmt = $pdo->prepare("SELECT * FROM leave_requests WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$user_id]);
 $requests = $stmt->fetchAll();
+
+// Fetch recently rejected requests (within last 7 days) for notification banner
+$stmt = $pdo->prepare("
+    SELECT id, leave_type, start_date, end_date, admin_comment, created_at
+    FROM leave_requests
+    WHERE user_id = ? AND status = 'Rejected'
+    AND updated_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+    ORDER BY updated_at DESC
+");
+$stmt->execute([$user_id]);
+$rejected_recent = $stmt->fetchAll();
+// Fallback: if updated_at doesn't exist, query without it
+if ($stmt->errorCode() !== '00000') {
+    $stmt = $pdo->prepare("SELECT id, leave_type, start_date, end_date, admin_comment FROM leave_requests WHERE user_id = ? AND status = 'Rejected' ORDER BY created_at DESC LIMIT 3");
+    $stmt->execute([$user_id]);
+    $rejected_recent = $stmt->fetchAll();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,9 +55,80 @@ $requests = $stmt->fetchAll();
         </div>
 
         <div class="content-wrapper">
+
+            <?php if (!empty($rejected_recent)): ?>
+            <!-- Rejection Notification Banner -->
+            <div id="rejection-banner" style="
+                background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+                border: 1px solid #fecaca;
+                border-left: 5px solid #ef4444;
+                border-radius: 12px;
+                padding: 18px 22px;
+                margin-bottom: 24px;
+                position: relative;
+            ">
+                <button onclick="document.getElementById('rejection-banner').style.display='none'" style="
+                    position: absolute; top: 12px; right: 14px;
+                    background: none; border: none; cursor: pointer;
+                    color: #ef4444; font-size: 1.1rem; line-height: 1;
+                " title="Dismiss"><i class="fas fa-times"></i></button>
+
+                <div style="display: flex; align-items: flex-start; gap: 14px;">
+                    <div style="
+                        width: 42px; height: 42px; border-radius: 50%;
+                        background: #ef4444; color: #fff;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 1.2rem; flex-shrink: 0;
+                    "><i class="fas fa-times-circle"></i></div>
+                    <div style="flex: 1;">
+                        <strong style="color: #b91c1c; font-size: 1rem;">
+                            <?php echo count($rejected_recent); ?> Leave Request<?php echo count($rejected_recent) > 1 ? 's Were' : ' Was'; ?> Rejected
+                        </strong>
+                        <p style="color: #7f1d1d; font-size: 0.87rem; margin: 6px 0 10px;">Please review the admin's feedback below and resubmit if needed.</p>
+                        <?php foreach ($rejected_recent as $rr): ?>
+                        <div style="
+                            background: rgba(255,255,255,0.7); border: 1px solid #fecaca;
+                            border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;
+                            font-size: 0.87rem;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                <strong style="color: #991b1b;"><?php echo e($rr['leave_type']); ?></strong>
+                                <span style="color: #b91c1c; font-size: 0.82rem;"><?php echo e($rr['start_date']); ?> → <?php echo e($rr['end_date']); ?></span>
+                            </div>
+                            <?php if ($rr['admin_comment']): ?>
+                            <div style="color: #7f1d1d;">
+                                <i class="fas fa-comment-alt" style="margin-right: 4px;"></i>
+                                <em><?php echo e($rr['admin_comment']); ?></em>
+                            </div>
+                            <?php else: ?>
+                            <div style="color: #9ca3af; font-style: italic;">No reason provided by admin.</div>
+                            <?php endif; ?>
+                        </div>
+                        <?php endforeach; ?>
+                        <a href="request_leave.php" style="
+                            display: inline-flex; align-items: center; gap: 6px;
+                            margin-top: 6px; padding: 8px 16px; border-radius: 8px;
+                            background: #ef4444; color: #fff; font-size: 0.85rem;
+                            font-weight: 600; text-decoration: none;
+                        "><i class="fas fa-redo"></i> Submit New Request</a>
+                    </div>
+                </div>
+            </div>
+            <?php endif; ?>
             <div class="stats-container">
                 <?php 
-                $icons = ['Vacation' => 'fa-plane', 'Sick Leave' => 'fa-briefcase-medical', 'Unpaid' => 'fa-user-clock'];
+                $icons = [
+                    'Vacation Leave' => 'fa-plane',
+                    'Sick Leave' => 'fa-briefcase-medical',
+                    'Emergency Leave' => 'fa-exclamation-triangle',
+                    'Maternity Leave' => 'fa-baby',
+                    'Paternity Leave' => 'fa-baby-carriage',
+                    'Bereavement Leave' => 'fa-heart',
+                    'Study Leave' => 'fa-graduation-cap',
+                    'Compensatory Leave' => 'fa-clock',
+                    'Unpaid Leave' => 'fa-user-clock',
+                    'Special Leave' => 'fa-star'
+                ];
                 foreach ($balances as $b): 
                     $icon = $icons[$b['leave_type']] ?? 'fa-calendar';
                 ?>

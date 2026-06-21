@@ -37,13 +37,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $stmt = $pdo->prepare("SELECT COUNT(*) FROM leave_balances WHERE user_id = ?");
                 $stmt->execute([$user_id]);
                 if ($stmt->fetchColumn() == 0) {
-                    $stmt = $pdo->prepare("INSERT INTO leave_balances (user_id, leave_type, total_allowed, days_used) VALUES (?, ?, ?, ?)");
-                    $stmt->execute([$user_id, 'Vacation',   15, 0]);
-                    $stmt->execute([$user_id, 'Sick Leave', 10, 0]);
-                    $stmt->execute([$user_id, 'Unpaid',     30, 0]);
+                    $stmt = $pdo->prepare("INSERT INTO leave_balances (user_id, leave_type, total_allowed, days_used) VALUES (?, ?, ?, 0)");
+                    $stmt->execute([$user_id, 'Vacation Leave', 15]);
+                    $stmt->execute([$user_id, 'Sick Leave', 10]);
+                    $stmt->execute([$user_id, 'Emergency Leave', 5]);
+                    $stmt->execute([$user_id, 'Maternity Leave', 105]);
+                    $stmt->execute([$user_id, 'Paternity Leave', 7]);
+                    $stmt->execute([$user_id, 'Bereavement Leave', 5]);
+                    $stmt->execute([$user_id, 'Study Leave', 15]);
+                    $stmt->execute([$user_id, 'Compensatory Leave', 0]);
+                    $stmt->execute([$user_id, 'Unpaid Leave', 30]);
+                    $stmt->execute([$user_id, 'Special Leave', 5]);
                 }
             }
             $pdo->commit();
+            // Write audit log
+            $log = $pdo->prepare("INSERT INTO audit_logs (actor_id, actor_name, action, target_type, target_id, details) VALUES (?,?,?,?,?,?)");
+            $log->execute([
+                $_SESSION['user_id'],
+                $_SESSION['name'],
+                'Registration ' . ($action === 'Active' ? 'Approved' : 'Rejected'),
+                'user',
+                $user_id,
+                json_encode(['user_name' => $user['name'], 'email' => $user['email']])
+            ]);
+
+            $_SESSION['flash_action'] = $action;
+            $_SESSION['flash_name']   = $user['name'];
+            $_SESSION['flash_type']   = 'registration';
         } else {
             $pdo->rollBack();
         }
