@@ -20,16 +20,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $user = $stmt->fetch();
 
     if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['user_id'] = $user['id'];
-        $_SESSION['name'] = $user['name'];
-        $_SESSION['role'] = $user['role'];
-
-        if ($user['role'] == 'Admin') {
-            header("Location: admin_dashboard.php");
+        // Check account status
+        if ($user['status'] === 'Pending') {
+            $error = "Your account is pending administrator approval. Please wait for activation.";
+        } elseif ($user['status'] === 'Rejected') {
+            $error = "Your registration was rejected. Please contact your administrator.";
         } else {
-            header("Location: employee_dashboard.php");
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['name']    = $user['name'];
+            $_SESSION['role']    = $user['role'];
+
+            if ($user['role'] == 'Admin') {
+                header("Location: admin_dashboard.php");
+            } else {
+                header("Location: employee_dashboard.php");
+            }
+            exit();
         }
-        exit();
     } else {
         $error = "Invalid email or password.";
     }
@@ -54,15 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </p>
                 <div style="margin-top: 30px; display: flex; gap: 30px;">
                     <div>
-                        <h4 style="margin: 0; color: #5cb85c;">Fast</h4>
+                        <h4 style="margin: 0; color: var(--primary);">Fast</h4>
                         <small>Apply in seconds</small>
                     </div>
                     <div>
-                        <h4 style="margin: 0; color: #5cb85c;">Simple</h4>
+                        <h4 style="margin: 0; color: var(--primary);">Simple</h4>
                         <small>Clear balances</small>
                     </div>
                     <div>
-                        <h4 style="margin: 0; color: #5cb85c;">Easy</h4>
+                        <h4 style="margin: 0; color: var(--primary);">Easy</h4>
                         <small>Quick approvals</small>
                     </div>
                 </div>
@@ -86,12 +93,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label>Password</label>
                         <input type="password" name="password" required placeholder="••••••••" style="padding: 12px;">
                     </div>
-                    <button type="submit" style="padding: 12px; font-weight: 600;">Sign In</button>
+                    <button type="submit" style="padding: 12px; font-weight: 600; width: 100%;">Sign In</button>
                 </form>
 
-                <div style="margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
-                    <p style="font-size: 0.85em; color: #666;">
+                <div style="margin-top: 40px; border-top: 1px solid var(--border); padding-top: 20px;">
+                    <p style="font-size: 0.85em; color: var(--text-muted);">
                         <strong>Demo:</strong> admin@example.com / password123
+                    </p>
+                    <p style="font-size: 0.85em; color: var(--text-muted); margin-top: 12px;">
+                        Don't have an account? <a href="register.php" style="color: var(--primary); font-weight: 600; text-decoration: none;">Register here</a>
                     </p>
                 </div>
             </div>

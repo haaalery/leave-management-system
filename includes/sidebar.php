@@ -13,7 +13,13 @@ $role = $_SESSION['role'] ?? '';
                 <a href="admin_dashboard.php"><i class="fas fa-fw fa-tachometer-alt"></i> Dashboard</a>
             </li>
             <li class="<?php echo $current_page == 'manage_users.php' ? 'active' : ''; ?>">
-                <a href="#"><i class="fas fa-fw fa-users"></i> Manage Users</a>
+                <a href="manage_users.php"><i class="fas fa-fw fa-users"></i> Manage Users</a>
+            </li>
+            <li class="<?php echo $current_page == 'pending_registrations.php' ? 'active' : ''; ?>">
+                <a href="pending_registrations.php"><i class="fas fa-fw fa-user-clock"></i> Registrations</a>
+            </li>
+            <li class="<?php echo $current_page == 'leave_requests.php' ? 'active' : ''; ?>">
+                <a href="leave_requests.php"><i class="fas fa-fw fa-calendar-alt"></i> Leave Requests</a>
             </li>
         <?php else: ?>
             <li class="<?php echo $current_page == 'employee_dashboard.php' ? 'active' : ''; ?>">
