@@ -33,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $dept_id      = (int)($_POST['department_id'] ?? 0);
     $pos_id       = (int)($_POST['position_id'] ?? 0);
 
-    // Normalize and capitalize name fields (Title Case) for consistent storage
-    if ($first_name !== '') { $first_name = mb_convert_case(mb_strtolower($first_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
-    if ($middle_name !== '') { $middle_name = mb_convert_case(mb_strtolower($middle_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
-    if ($last_name !== '') { $last_name = mb_convert_case(mb_strtolower($last_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
+    // Normalize names to UPPERCASE for consistent storage
+    if ($first_name !== '') { $first_name = mb_strtoupper($first_name, 'UTF-8'); }
+    if ($middle_name !== '') { $middle_name = mb_strtoupper($middle_name, 'UTF-8'); }
+    if ($last_name !== '') { $last_name = mb_strtoupper($last_name, 'UTF-8'); }
 
 
     // Resolve text names from IDs for the legacy columns
@@ -264,19 +264,14 @@ async function loadPositions(deptId, targetId) {
     if (!data.length) sel.innerHTML = '<option value="">No positions in this department</option>';
 }
 
-// Convert a string to Title Case (capitalize first letter of each word)
-function toTitleCase(str) {
-    return String(str || '').toLowerCase().replace(/\b\w/g, function(ch){ return ch.toUpperCase(); });
-}
-
-// Auto-capitalize name inputs as the user types and preserve caret position
+// Auto-uppercase name inputs as the user types and preserve caret position
 ['first_name','middle_name','last_name'].forEach(function(name){
     const el = document.querySelector('input[name="' + name + '"]');
     if (!el) return;
     el.addEventListener('input', function(e){
         const start = this.selectionStart;
         const end = this.selectionEnd;
-        const newVal = toTitleCase(this.value);
+        const newVal = (this.value || '').toUpperCase();
         if (newVal !== this.value) {
             this.value = newVal;
             try { this.setSelectionRange(start, end); } catch (err) { /* ignore */ }
