@@ -11,6 +11,7 @@ if (isset($_SESSION['user_id'])) {
 
 $error = "";
 $success = "";
+$first_name = $middle_name = $last_name = $email = $gender = '';
 
 // Load departments for dropdown
 $departments_list = $pdo->query("SELECT id, name FROM departments ORDER BY name ASC")->fetchAll();
@@ -31,6 +32,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $confirm      = $_POST['confirm_password'] ?? '';
     $dept_id      = (int)($_POST['department_id'] ?? 0);
     $pos_id       = (int)($_POST['position_id'] ?? 0);
+
+    // Normalize and capitalize name fields (Title Case) for consistent storage
+    if ($first_name !== '') { $first_name = mb_convert_case(mb_strtolower($first_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
+    if ($middle_name !== '') { $middle_name = mb_convert_case(mb_strtolower($middle_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
+    if ($last_name !== '') { $last_name = mb_convert_case(mb_strtolower($last_name, 'UTF-8'), MB_CASE_TITLE, 'UTF-8'); }
+
 
     // Resolve text names from IDs for the legacy columns
     $dept_name = '';
@@ -172,30 +179,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     <div class="form-row">
                         <div class="form-group">
                             <label>First Name <span style="color:var(--danger)">*</span></label>
-                            <input type="text" name="first_name" required placeholder="John" value="<?php echo e($_POST['first_name'] ?? ''); ?>">
+                            <input type="text" name="first_name" required placeholder="John" value="<?php echo e($first_name); ?>">
                         </div>
                         <div class="form-group">
                             <label>Middle Name <span style="font-size:0.8rem; color:var(--text-muted);">(Optional)</span></label>
-                            <input type="text" name="middle_name" placeholder="Doe" value="<?php echo e($_POST['middle_name'] ?? ''); ?>">
+                            <input type="text" name="middle_name" placeholder="Doe" value="<?php echo e($middle_name); ?>">
                         </div>
                     </div>
 
                     <div class="form-group">
                         <label>Last Name <span style="color:var(--danger)">*</span></label>
-                        <input type="text" name="last_name" required placeholder="Smith" value="<?php echo e($_POST['last_name'] ?? ''); ?>">
+                        <input type="text" name="last_name" required placeholder="Smith" value="<?php echo e($last_name); ?>">
                     </div>
 
                     <div class="form-group">
                         <label>Email Address <span style="color:var(--danger)">*</span></label>
-                        <input type="email" name="email" required placeholder="john@example.com" value="<?php echo e($_POST['email'] ?? ''); ?>">
+                        <input type="email" name="email" required placeholder="john@example.com" value="<?php echo e($email); ?>">
                     </div>
 
                     <div class="form-group">
                         <label>Gender <span style="color:var(--danger)">*</span></label>
                         <select name="gender" required style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; background: #fff; font-size: 0.95rem;">
                             <option value="">Select Gender</option>
-                            <option value="Male" <?php echo (($_POST['gender'] ?? '') === 'Male') ? 'selected' : ''; ?>>Male</option>
-                            <option value="Female" <?php echo (($_POST['gender'] ?? '') === 'Female') ? 'selected' : ''; ?>>Female</option>
+                            <option value="Male" <?php echo ($gender === 'Male') ? 'selected' : ''; ?>>Male</option>
+                                                        <option value="Female" <?php echo ($gender === 'Female') ? 'selected' : ''; ?>>Female</option>
                         </select>
                     </div>
 
