@@ -111,6 +111,24 @@ $balances = [];
 foreach ($balances_raw as $b) {
     $balances[$b['user_id']][] = $b;
 }
+
+// Fetch user counts for statistics
+$total_users = count($users);
+$active_users = 0;
+$pending_users = 0;
+$rejected_users = 0;
+$admin_count = 0;
+$manager_count = 0;
+$employee_count = 0;
+
+foreach ($users as $u) {
+    if ($u['status'] === 'Active') $active_users++;
+    if ($u['status'] === 'Pending') $pending_users++;
+    if ($u['status'] === 'Rejected') $rejected_users++;
+    if ($u['role'] === 'Admin') $admin_count++;
+    if ($u['role'] === 'Manager') $manager_count++;
+    if ($u['role'] === 'Employee') $employee_count++;
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -139,6 +157,37 @@ foreach ($balances_raw as $b) {
             <?php if ($error): ?>
                 <p class="error"><?php echo e($error); ?></p>
             <?php endif; ?>
+
+            <!-- Summary Stats -->
+            <div class="stats-container" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Total Users</strong>
+                        <div class="value"><?php echo $total_users; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.08); color: #3b82f6;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Active Users</strong>
+                        <div class="value"><?php echo $active_users; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Pending Users</strong>
+                        <div class="value"><?php echo $pending_users; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.08); color: var(--warning);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
 
             <!-- Add User Form -->
             <div class="card">
@@ -249,31 +298,34 @@ foreach ($balances_raw as $b) {
                                         <td>
                                             <?php
                                             $gender_val = $user['gender'] ?? '';
-                                            $gender_color = $gender_val === 'Female' ? '#ec4899' : '#06b6d4';
-                                            $gender_icon  = $gender_val === 'Female' ? 'fa-venus' : 'fa-mars';
+                                            $gender_color = $gender_val === 'Female' ? '#d946ef' : '#3b82f6';
+                                            $gender_bg = $gender_val === 'Female' ? 'rgba(217, 70, 239, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+                                            $gender_icon  = $gender_val === 'Female' ? 'fa-venus' : '';
                                             ?>
-                                            <span class="badge" style="background: <?php echo $gender_color; ?>;">
-                                                <i class="fas <?php echo $gender_icon; ?>"></i>
+                                            <span class="badge" style="background: <?php echo $gender_bg; ?>; color: <?php echo $gender_color; ?>; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;">
+                                                <?php if ($gender_icon): ?><i class="fas <?php echo $gender_icon; ?>"></i><?php endif; ?>
                                                 <?php echo e($gender_val ?: 'N/A'); ?>
                                             </span>
                                         </td>
                                         <td>
                                             <?php
-                                            $role_color = '#5bc85c'; // Employee
-                                            if ($user['role'] === 'Admin') $role_color = '#0275d8';
-                                            if ($user['role'] === 'Manager') $role_color = '#7c3aed'; // Purple for Manager
+                                            $role_color = '#10b981'; // Employee - green
+                                            $role_bg = 'rgba(16, 185, 129, 0.1)';
+                                            if ($user['role'] === 'Admin') { $role_color = '#4f46e5'; $role_bg = 'rgba(79, 70, 229, 0.1)'; }
+                                            if ($user['role'] === 'Manager') { $role_color = '#f59e0b'; $role_bg = 'rgba(245, 158, 11, 0.1)'; }
                                             ?>
-                                            <span class="badge" style="background: <?php echo $role_color; ?>;">
+                                            <span class="badge" style="background: <?php echo $role_bg; ?>; color: <?php echo $role_color; ?>; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;">
                                                 <?php echo e($user['role']); ?>
                                             </span>
                                         </td>
                                         <td>
                                             <?php 
-                                            $status_color = '#f0ad4e'; // Pending
-                                            if ($user['status'] === 'Active') $status_color = 'var(--success)';
-                                            if ($user['status'] === 'Rejected') $status_color = 'var(--danger)';
+                                            $status_color = '#ca8a04'; // Pending - amber
+                                            $status_bg = 'rgba(202, 138, 4, 0.1)';
+                                            if ($user['status'] === 'Active') { $status_color = '#10b981'; $status_bg = 'rgba(16, 185, 129, 0.1)'; }
+                                            if ($user['status'] === 'Rejected') { $status_color = '#ef4444'; $status_bg = 'rgba(239, 68, 68, 0.1)'; }
                                             ?>
-                                            <span class="badge" style="background: <?php echo $status_color; ?>;">
+                                            <span class="badge" style="background: <?php echo $status_bg; ?>; color: <?php echo $status_color; ?>; border-radius: 6px; padding: 6px 12px; font-size: 0.85rem; font-weight: 600;">
                                                 <?php echo e($user['status']); ?>
                                             </span>
                                         </td>
@@ -284,7 +336,7 @@ foreach ($balances_raw as $b) {
                                                         <?php foreach ($balances[$user['id']] as $b): ?>
                                                             <span style="font-size: 0.85rem; background: #f0f2f5; padding: 4px 8px; border-radius: 4px; border: 1px solid #e1e4e8;">
                                                                 <strong><?php echo e($b['leave_type']); ?>:</strong> 
-                                                                <?php echo (float)($b['total_allowed'] - $b['days_used']); ?>/<?php echo (float)$b['total_allowed']; ?>
+                                                                <?php echo (int)($b['total_allowed'] - $b['days_used']); ?>/<?php echo (int)$b['total_allowed']; ?>
                                                             </span>
                                                         <?php endforeach; ?>
                                                     </div>

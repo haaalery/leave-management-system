@@ -68,6 +68,11 @@ $posQuery .= " ORDER BY d.name ASC, p.title ASC";
 $stmt = $pdo->prepare($posQuery);
 $stmt->execute($posParams);
 $positions = $stmt->fetchAll();
+
+// Calculate counts for summary cards
+$total_positions = count($positions);
+$total_departments = $pdo->query("SELECT COUNT(*) FROM departments")->fetchColumn();
+$total_employees_assigned = $pdo->query("SELECT COUNT(*) FROM users WHERE position_id IS NOT NULL")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -100,6 +105,37 @@ $positions = $stmt->fetchAll();
         <div class="content-wrapper">
             <?php if ($success): ?><p class="success"><?php echo e($success); ?></p><?php endif; ?>
             <?php if ($error):   ?><p class="error"><?php echo e($error); ?></p><?php endif; ?>
+
+            <!-- Summary Stats -->
+            <div class="stats-container" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Total Positions</strong>
+                        <div class="value"><?php echo $total_positions; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.08); color: #3b82f6;">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Departments</strong>
+                        <div class="value"><?php echo $total_departments; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+                        <i class="fas fa-building"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Employees Assigned</strong>
+                        <div class="value"><?php echo $total_employees_assigned; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.08); color: var(--warning);">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+            </div>
 
             <!-- Add Position -->
             <div class="card" style="margin-bottom: 28px;">

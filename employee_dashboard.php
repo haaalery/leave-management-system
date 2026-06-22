@@ -118,29 +118,29 @@ if ($stmt->errorCode() !== '00000') {
             <div class="stats-container">
                 <?php 
                 $icons = [
-                    'Vacation Leave' => 'fa-plane',
-                    'Sick Leave' => 'fa-briefcase-medical',
-                    'Emergency Leave' => 'fa-exclamation-triangle',
-                    'Maternity Leave' => 'fa-baby',
-                    'Paternity Leave' => 'fa-baby-carriage',
-                    'Bereavement Leave' => 'fa-heart',
-                    'Study Leave' => 'fa-graduation-cap',
-                    'Compensatory Leave' => 'fa-clock',
-                    'Unpaid Leave' => 'fa-user-clock',
-                    'Special Leave' => 'fa-star'
+                    'Vacation Leave' => ['icon' => 'fa-plane', 'color' => '#3b82f6', 'bg' => 'rgba(59, 130, 246, 0.08)'],
+                    'Sick Leave' => ['icon' => 'fa-briefcase-medical', 'color' => '#ef4444', 'bg' => 'rgba(239, 68, 68, 0.08)'],
+                    'Emergency Leave' => ['icon' => 'fa-exclamation-triangle', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.08)'],
+                    'Maternity Leave' => ['icon' => 'fa-baby', 'color' => '#ec4899', 'bg' => 'rgba(236, 72, 153, 0.08)'],
+                    'Paternity Leave' => ['icon' => 'fa-baby-carriage', 'color' => '#06b6d4', 'bg' => 'rgba(6, 182, 212, 0.08)'],
+                    'Bereavement Leave' => ['icon' => 'fa-heart', 'color' => '#ef4444', 'bg' => 'rgba(239, 68, 68, 0.08)'],
+                    'Study Leave' => ['icon' => 'fa-graduation-cap', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.08)'],
+                    'Compensatory Leave' => ['icon' => 'fa-clock', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.08)'],
+                    'Unpaid Leave' => ['icon' => 'fa-user-clock', 'color' => '#64748b', 'bg' => 'rgba(100, 116, 139, 0.08)'],
+                    'Special Leave' => ['icon' => 'fa-star', 'color' => '#eab308', 'bg' => 'rgba(234, 179, 8, 0.08)']
                 ];
                 foreach ($balances as $b): 
-                    $icon = $icons[$b['leave_type']] ?? 'fa-calendar';
+                    $meta = $icons[$b['leave_type']] ?? ['icon' => 'fa-calendar', 'color' => '#64748b', 'bg' => 'rgba(100, 116, 139, 0.08)'];
                 ?>
                     <div class="stat-card">
                         <div class="stat-info">
                             <strong><?php echo e($b['leave_type']); ?></strong>
                             <div class="value">
-                                <?php echo $b['total_allowed'] - $b['days_used']; ?> / <?php echo $b['total_allowed']; ?>
+                                <?php echo (int)($b['total_allowed'] - $b['days_used']); ?> / <?php echo (int)$b['total_allowed']; ?>
                             </div>
                         </div>
-                        <div class="stat-icon">
-                            <i class="fas <?php echo $icon; ?>"></i>
+                        <div class="stat-icon" style="background: <?php echo $meta['bg']; ?>; color: <?php echo $meta['color']; ?>;">
+                            <i class="fas <?php echo $meta['icon']; ?>"></i>
                         </div>
                     </div>
                 <?php endforeach; ?>

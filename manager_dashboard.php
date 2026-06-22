@@ -7,6 +7,20 @@ checkManagerOrAdmin();
 
 $manager_id = $_SESSION['user_id'];
 
+// Leave type icons configuration
+$leave_icons = [
+    'Vacation Leave' => ['icon' => 'fa-plane', 'color' => '#3b82f6', 'bg' => 'rgba(59, 130, 246, 0.08)'],
+    'Sick Leave' => ['icon' => 'fa-briefcase-medical', 'color' => '#ef4444', 'bg' => 'rgba(239, 68, 68, 0.08)'],
+    'Emergency Leave' => ['icon' => 'fa-exclamation-triangle', 'color' => '#f59e0b', 'bg' => 'rgba(245, 158, 11, 0.08)'],
+    'Maternity Leave' => ['icon' => 'fa-baby', 'color' => '#ec4899', 'bg' => 'rgba(236, 72, 153, 0.08)'],
+    'Paternity Leave' => ['icon' => 'fa-baby-carriage', 'color' => '#06b6d4', 'bg' => 'rgba(6, 182, 212, 0.08)'],
+    'Bereavement Leave' => ['icon' => 'fa-heart', 'color' => '#ef4444', 'bg' => 'rgba(239, 68, 68, 0.08)'],
+    'Study Leave' => ['icon' => 'fa-graduation-cap', 'color' => '#8b5cf6', 'bg' => 'rgba(139, 92, 246, 0.08)'],
+    'Compensatory Leave' => ['icon' => 'fa-clock', 'color' => '#10b981', 'bg' => 'rgba(16, 185, 129, 0.08)'],
+    'Unpaid Leave' => ['icon' => 'fa-user-clock', 'color' => '#64748b', 'bg' => 'rgba(100, 116, 139, 0.08)'],
+    'Special Leave' => ['icon' => 'fa-star', 'color' => '#eab308', 'bg' => 'rgba(234, 179, 8, 0.08)']
+];
+
 // Get the department managed by this manager
 $dept_stmt = $pdo->prepare("SELECT * FROM departments WHERE manager_id = ?");
 $dept_stmt->execute([$manager_id]);
@@ -109,6 +123,11 @@ if ($dept_id) {
         .btn-confirm-approve { background:var(--success); color:#fff; }
         .btn-confirm-reject  { background:var(--danger);  color:#fff; }
         .btn-cancel-modal    { background:#f1f5f9; color:var(--text); border:1px solid var(--border) !important; }
+        .leave-type-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+        }
+        .leave-type-badge i { font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -187,7 +206,15 @@ if ($dept_id) {
                                         <?php foreach ($pending_requests as $r): ?>
                                             <tr>
                                                 <td><strong><?php echo e($r['employee_name']); ?></strong></td>
-                                                <td><?php echo e($r['leave_type']); ?></td>
+                                                <td>
+                                                    <?php 
+                                                    $meta = $leave_icons[$r['leave_type']] ?? ['icon' => 'fa-calendar', 'color' => '#64748b', 'bg' => 'rgba(100, 116, 139, 0.08)'];
+                                                    ?>
+                                                    <span class="leave-type-badge" style="background: <?php echo $meta['bg']; ?>; color: <?php echo $meta['color']; ?>;">
+                                                        <i class="fas <?php echo $meta['icon']; ?>"></i>
+                                                        <?php echo e($r['leave_type']); ?>
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     <?php 
                                                     $start = new DateTime($r['start_date']);
@@ -243,7 +270,15 @@ if ($dept_id) {
                                         <?php foreach ($history_requests as $r): ?>
                                             <tr>
                                                 <td><strong><?php echo e($r['employee_name']); ?></strong></td>
-                                                <td><?php echo e($r['leave_type']); ?></td>
+                                                <td>
+                                                    <?php 
+                                                    $meta = $leave_icons[$r['leave_type']] ?? ['icon' => 'fa-calendar', 'color' => '#64748b', 'bg' => 'rgba(100, 116, 139, 0.08)'];
+                                                    ?>
+                                                    <span class="leave-type-badge" style="background: <?php echo $meta['bg']; ?>; color: <?php echo $meta['color']; ?>;">
+                                                        <i class="fas <?php echo $meta['icon']; ?>"></i>
+                                                        <?php echo e($r['leave_type']); ?>
+                                                    </span>
+                                                </td>
                                                 <td>
                                                     <?php 
                                                     $start = new DateTime($r['start_date']);

@@ -338,7 +338,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <div class="balance-item-row">
                                 <span class="balance-name"><?php echo e($b['leave_type']); ?></span>
                                 <span class="balance-nums">
-                                    <?php echo (float)($b['total_allowed'] - $b['days_used']); ?> / <?php echo (float)$b['total_allowed']; ?> remaining
+                                    <?php echo (int)($b['total_allowed'] - $b['days_used']); ?> / <?php echo (int)$b['total_allowed']; ?> remaining
                                 </span>
                             </div>
                         <?php endforeach; ?>

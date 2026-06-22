@@ -66,6 +66,11 @@ $departments = $pdo->query("
     LEFT JOIN users u ON d.manager_id = u.id
     ORDER BY d.name ASC
 ")->fetchAll();
+
+// Calculate counts for summary cards
+$total_departments = count($departments);
+$total_positions = $pdo->query("SELECT COUNT(*) FROM positions")->fetchColumn();
+$total_assigned_users = $pdo->query("SELECT COUNT(*) FROM users WHERE department_id IS NOT NULL")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en">

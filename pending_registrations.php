@@ -8,6 +8,11 @@ checkAdmin();
 // Fetch all pending registrations
 $stmt = $pdo->query("SELECT * FROM users WHERE status = 'Pending' ORDER BY id ASC");
 $pending_users = $stmt->fetchAll();
+
+// Calculate counts for summary cards
+$pending_count = count($pending_users);
+$total_users = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+$active_users = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'Active'")->fetchColumn();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -123,6 +128,37 @@ $pending_users = $stmt->fetchAll();
         </div>
 
         <div class="content-wrapper">
+            <!-- Summary Stats -->
+            <div class="stats-container" style="margin-bottom: 24px;">
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Total Users</strong>
+                        <div class="value"><?php echo $total_users; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(59, 130, 246, 0.08); color: #3b82f6;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Active Users</strong>
+                        <div class="value"><?php echo $active_users; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.08); color: #10b981;">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-info">
+                        <strong>Pending Approvals</strong>
+                        <div class="value"><?php echo $pending_count; ?></div>
+                    </div>
+                    <div class="stat-icon" style="background: rgba(245, 158, 11, 0.08); color: var(--warning);">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h3><i class="fas fa-list"></i> Registration Requests</h3>
