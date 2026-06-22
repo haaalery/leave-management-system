@@ -263,4 +263,24 @@ async function loadPositions(deptId, targetId) {
     });
     if (!data.length) sel.innerHTML = '<option value="">No positions in this department</option>';
 }
+
+// Convert a string to Title Case (capitalize first letter of each word)
+function toTitleCase(str) {
+    return String(str || '').toLowerCase().replace(/\b\w/g, function(ch){ return ch.toUpperCase(); });
+}
+
+// Auto-capitalize name inputs as the user types and preserve caret position
+['first_name','middle_name','last_name'].forEach(function(name){
+    const el = document.querySelector('input[name="' + name + '"]');
+    if (!el) return;
+    el.addEventListener('input', function(e){
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        const newVal = toTitleCase(this.value);
+        if (newVal !== this.value) {
+            this.value = newVal;
+            try { this.setSelectionRange(start, end); } catch (err) { /* ignore */ }
+        }
+    });
+});
 </script>
